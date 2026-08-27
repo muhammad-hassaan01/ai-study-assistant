@@ -20,95 +20,189 @@ st.divider()
 
 DATABASE_URL = "https://ai-study-assistant-e9edd-default-rtdb.firebaseio.com/"
 
-user_response = requests.get(DATABASE_URL + "/user.json")
+# ---------------- USER LOGIN ----------------
 
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if user_response.json():
-
-    user_data = user_response.json()
-
-    st.session_state.user_name = user_data.get("name", "")
-    st.session_state.age = user_data.get("age", 0)
-    st.session_state.favorite_subject = user_data.get("favorite_subject", "")
-    st.session_state.learning_goal = user_data.get("learning_goal", "")
-    st.session_state.usage_count = user_data.get("usage_count", 0)
-
-else:
-
-    st.session_state.user_name = ""
-    st.session_state.age = 0
-    st.session_state.favorite_subject = ""
-    st.session_state.learning_goal = ""
-    st.session_state.usage_count = 0
-
+if "username" not in st.session_state:
+    st.session_state.username = ""
 
 if "edit_profile" not in st.session_state:
     st.session_state.edit_profile = False
 
 
-if st.session_state.user_name == "" or st.session_state.edit_profile:
+# LOGIN / CREATE ACCOUNT
+if not st.session_state.logged_in:
 
-    st.sidebar.title("👤 Your Profile")
+    st.sidebar.title("👤 Welcome!")
 
-    name = st.sidebar.text_input(
-        "Your name",
-        value=st.session_state.user_name
+    account_type = st.sidebar.radio(
+        "Choose an option",
+        ["Login", "Create Account"]
     )
 
-    age = st.sidebar.number_input(
-        "Your age",
-        min_value=5,
-        max_value=100,
-        value=st.session_state.age if st.session_state.age != 0 else 15
-    )
+    username = st.sidebar.text_input(
+        "Username"
+    ).lower().strip()
 
-    favorite_subject = st.sidebar.selectbox(
-        "Favorite subject",
-        ["Math", "Science", "English", "Computer Science", "Physics", "Chemistry", "Biology", "History"]
-    )
+    if account_type == "Login":
 
-    learning_goal = st.sidebar.selectbox(
-        "Learning goal",
-        ["Exam Prep", "General Knowledge", "Skill Building"]
-    )
+        if st.sidebar.button("Login"):
 
-    if st.sidebar.button("Save Profile"):
+            if username:
 
-        if name:
+                user_response = requests.get(
+                    DATABASE_URL + f"/users/{username}.json"
+                )
 
-            st.session_state.user_name = name
-            st.session_state.age = age
-            st.session_state.favorite_subject = favorite_subject
-            st.session_state.learning_goal = learning_goal
-            st.session_state.edit_profile = False
+                if user_response.json():
 
-            requests.put(
-                DATABASE_URL + "/user.json",
-                json={
-                    "name": name,
-                    "age": age,
-                    "favorite_subject": favorite_subject,
-                    "learning_goal": learning_goal,
-                    "usage_count": st.session_state.usage_count
-                }
-            )
+                    user_data = user_response.json()
 
+                    st.session_state.username = username
+                    st.session_state.user_name = user_data.get("name", "")
+                    st.session_state.age = user_data.get("age", 0)
+                    st.session_state.favorite_subject = user_data.get("favorite_subject", "")
+                    st.session_state.learning_goal = user_data.get("learning_goal", "")
+                    st.session_state.usage_count = user_data.get("usage_count", 0)
+
+                    st.session_state.logged_in = True
+
+                    st.rerun()
+
+                else:
+
+                    st.sidebar.error(
+                        "Username not found. Please create an account."
+                    )
+
+    else:
+
+        st.sidebar.info(
+            "Create a username and profile."
+        )
+
+        if st.sidebar.button("Create Account"):
+
+            if username:
+
+                user_response = requests.get(
+                    DATABASE_URL + f"/users/{username}.json"
+                )
+
+                if user_response.json():
+
+                    st.sidebar.error(
+                        "Username already exists. Choose another one."
+                    )
+
+                else:
+
+                    st.session_state.username = username
+                    st.session_state.user_name = ""
+                    st.session_state.age = 15
+                    st.session_state.favorite_subject = "Math"
+                    st.session_state.learning_goal = "Exam Prep"
+                    st.session_state.logged_in = True
+                    st.session_state.edit_profile = True
+
+                    requests.put(
+                        DATABASE_URL + f"/users/{username}.json",
+                        json={
+                            "name": "",
+                            "age": 15,
+                            "favorite_subject": "Math",
+                            "learning_goal": "Exam Prep",
+                            "usage_count": 0,
+                            "messages": []
+                        }
+                    )
+
+                    st.rerun()
+
+
+# ---------------- PROFILE ----------------
+
+if st.session_state.logged_in:
+
+    if st.session_state.user_name == "" or st.session_state.edit_profile:
+
+        st.sidebar.title("👤 Your Profile")
+
+        name = st.sidebar.text_input(
+            "Your name",
+            value=st.session_state.user_name
+        )
+
+        age = st.sidebar.number_input(
+            "Your age",
+            min_value=5,
+            max_value=100,
+            value=st.session_state.age
+        )
+
+        favorite_subject = st.sidebar.selectbox(
+            "Favorite subject",
+            [
+                "Math",
+                "Science",
+                "English",
+                "Computer Science",
+                "Physics",
+                "Chemistry",
+                "Biology",
+                "History"
+            ]
+        )
+
+        learning_goal = st.sidebar.selectbox(
+            "Learning goal",
+            [
+                "Exam Prep",
+                "General Knowledge",
+                "Skill Building"
+            ]
+        )
+
+        if st.sidebar.button("Save Profile"):
+
+            if name:
+
+                st.session_state.user_name = name
+                st.session_state.age = age
+                st.session_state.favorite_subject = favorite_subject
+                st.session_state.learning_goal = learning_goal
+                st.session_state.edit_profile = False
+
+                requests.put(
+                    DATABASE_URL + f"/users/{st.session_state.username}.json",
+                    json={
+                        "name": name,
+                        "age": age,
+                        "favorite_subject": favorite_subject,
+                        "learning_goal": learning_goal,
+                        "usage_count": st.session_state.usage_count,
+                        "messages": []
+                    }
+                )
+
+                st.rerun()
+
+    else:
+
+        st.sidebar.success(
+            f"👋 Welcome back, {st.session_state.user_name}!"
+        )
+
+        st.sidebar.write(
+            f"Times used: {st.session_state.usage_count}"
+        )
+
+        if st.sidebar.button("✏️ Update Profile"):
+
+            st.session_state.edit_profile = True
             st.rerun()
-
-
-else:
-
-    st.sidebar.success(
-        f"👋 Welcome back, {st.session_state.user_name}!"
-    )
-
-    st.sidebar.write(
-        f"Times used: {st.session_state.usage_count}"
-    )
-
-    if st.sidebar.button("✏️ Update Profile"):
-        st.session_state.edit_profile = True
-        st.rerun()
 
 
 subject = st.sidebar.selectbox(
@@ -132,7 +226,9 @@ response_style = st.sidebar.selectbox(
 
 st.sidebar.write("Customize how the AI explains your answers.")
 
-response = requests.get(DATABASE_URL + "/messages.json")
+response = requests.get(
+    DATABASE_URL + f"/users/{st.session_state.username}/messages.json"
+)
 
 if response.json():
     st.session_state.messages = response.json()
@@ -220,7 +316,10 @@ Focus on historical events, people, dates, causes, and effects.
     with st.chat_message("assistant"):
         st.write(answer)
 
-    requests.put(DATABASE_URL + "/messages.json", json=st.session_state.messages)
+requests.put(
+    DATABASE_URL + f"/users/{st.session_state.username}/messages.json",
+    json=st.session_state.messages
+)
 
 st.divider()
 
