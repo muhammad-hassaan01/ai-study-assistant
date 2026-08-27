@@ -30,7 +30,9 @@ if "username" not in st.session_state:
 
 if "edit_profile" not in st.session_state:
     st.session_state.edit_profile = False
-
+    
+if "usage_count" not in st.session_state:
+    st.session_state.usage_count = 0
 
 if not st.session_state.logged_in:
 
