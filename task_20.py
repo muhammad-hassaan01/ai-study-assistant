@@ -20,7 +20,7 @@ st.divider()
 
 DATABASE_URL = "https://ai-study-assistant-e9edd-default-rtdb.firebaseio.com/"
 
-# ---------------- USER LOGIN ----------------
+
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -32,7 +32,6 @@ if "edit_profile" not in st.session_state:
     st.session_state.edit_profile = False
 
 
-# LOGIN / CREATE ACCOUNT
 if not st.session_state.logged_in:
 
     st.sidebar.title("👤 Welcome!")
@@ -122,7 +121,6 @@ if not st.session_state.logged_in:
                     st.rerun()
 
 
-# ---------------- PROFILE ----------------
 
 if st.session_state.logged_in:
 
@@ -210,21 +208,44 @@ subject = st.sidebar.selectbox(
     ["Math", "Science", "English", "Computer Science", "Physics", "Chemistry", "Biology", "History"]
 )
 
-difficulty = st.sidebar.selectbox(
-    "Choose Difficulty Level",
-    ["Beginner", "Intermediate", "Advanced"]
-)
+if st.session_state.logged_in and st.session_state.user_name:
 
-st.sidebar.divider()
+    subject = st.sidebar.selectbox(
+        "Choose a Subject",
+        [
+            "Math",
+            "Science",
+            "English",
+            "Computer Science",
+            "Physics",
+            "Chemistry",
+            "Biology",
+            "History"
+        ]
+    )
 
-st.sidebar.subheader("⚙️ Settings")
+    difficulty = st.sidebar.selectbox(
+        "Choose Difficulty Level",
+        ["Beginner", "Intermediate", "Advanced"]
+    )
 
-response_style = st.sidebar.selectbox(
-    "Response Style",
-    ["Simple and Clear", "Detailed Explanation", "Step-by-Step", "Short Answer"]
-)
+    st.sidebar.divider()
 
-st.sidebar.write("Customize how the AI explains your answers.")
+    st.sidebar.subheader("⚙️ Settings")
+
+    response_style = st.sidebar.selectbox(
+        "Response Style",
+        [
+            "Simple and Clear",
+            "Detailed Explanation",
+            "Step-by-Step",
+            "Short Answer"
+        ]
+    )
+
+    st.sidebar.write(
+        "Customize how the AI explains your answers."
+    )
 
 response = requests.get(
     DATABASE_URL + f"/users/{st.session_state.username}/messages.json"
@@ -240,7 +261,15 @@ for message in st.session_state.messages:
         st.write(message["content"])
   
            
-question = st.chat_input("Ask your question...")
+if st.session_state.logged_in and st.session_state.user_name:
+
+    question = st.chat_input("Ask your question...")
+
+else:
+
+    question = None
+    st.info("👤 Please create an account and enter your name before asking a question.")
+
 if question:
 
     st.session_state.messages.append(
