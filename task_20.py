@@ -203,11 +203,6 @@ if st.session_state.logged_in:
             st.rerun()
 
 
-subject = st.sidebar.selectbox(
-    "Choose a Subject",
-    ["Math", "Science", "English", "Computer Science", "Physics", "Chemistry", "Biology", "History"]
-)
-
 if st.session_state.logged_in and st.session_state.user_name:
 
     subject = st.sidebar.selectbox(
