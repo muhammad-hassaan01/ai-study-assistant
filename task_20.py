@@ -10,10 +10,13 @@ st.set_page_config(
     layout="centered"
 )
 
-client = genai.Client(api_key="YOUR_API_KEY_HERE")
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-st.title("AI Study Assistant")
-st.write("Ask me any school question. ")
+st.title("📚 AI Study Assistant")
+st.subheader("Your personal AI tutor for school subjects")
+st.write("Ask me any school question.")
+
+st.divider()
 
 DATABASE_URL = "https://ai-study-assistant-e9edd-default-rtdb.firebaseio.com/"
 
@@ -113,11 +116,21 @@ subject = st.sidebar.selectbox(
     ["Math", "Science", "English", "Computer Science", "Physics", "Chemistry", "Biology", "History"]
 )
 
-
 difficulty = st.sidebar.selectbox(
     "Choose Difficulty Level",
     ["Beginner", "Intermediate", "Advanced"]
 )
+
+st.sidebar.divider()
+
+st.sidebar.subheader("⚙️ Settings")
+
+response_style = st.sidebar.selectbox(
+    "Response Style",
+    ["Simple and Clear", "Detailed Explanation", "Step-by-Step", "Short Answer"]
+)
+
+st.sidebar.write("Customize how the AI explains your answers.")
 
 response = requests.get(DATABASE_URL + "/messages.json")
 
@@ -149,6 +162,7 @@ if question:
 
     Subject: {subject}
     Difficulty Level: {difficulty}
+    Response Style: {response_style}
 
     Answer the student's question according to the selected
     subject and difficulty level.
